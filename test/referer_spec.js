@@ -1,19 +1,19 @@
 "use strict";
 
-var referer = require("../lib/referer.js");
-var test = require("tap").test;
+const { test } = require("tap");
+const { getContext } = require("./test_utils");
+const referer = require("../lib/referer.js");
 
 test("should correctly rewrite referers", function (t) {
-  var expected = "http://foobar.com/proxy/a";
-  var data = {
+  const expected = "http://foobar.com/proxy/a";
+  const context = getContext({
     url: "http://foobar.com/b",
     headers: {
       referer: "http://localhost:8080/proxy/" + expected,
     },
-  };
-  referer({
-    prefix: "/proxy/",
-  })(data);
-  t.equal(data.headers.referer, expected);
+    _proxyUrl: new URL("http://localhost:8080/proxy/"),
+  });
+  referer(context);
+  t.equal(context.headers.referer, expected);
   t.end();
 });

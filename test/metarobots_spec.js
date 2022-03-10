@@ -1,58 +1,72 @@
 "use strict";
 
-var test = require("tap").test,
-  concat = require("concat-stream"),
-  utils = require("./test_utils.js"),
-  getData = utils.getData,
-  defaultConfig = require("../lib/unblocker").defaultConfig;
+const { test } = require("tap");
+const concat = require("concat-stream");
+const utils = require("./test_utils.js");
+const { getContext } = utils;
+const htmlParser = require("../lib/html-parser");
 
-var metaRobots = require("../lib/meta-robots.js");
+const metaRobots = require("../lib/meta-robots.js");
 
-var head = "<html><head><title>test</title></head>";
-var body = "<body><p>asdf</p></body></html>";
+const headStart = "<html><head><title>test</title>";
+const headEnd = "</head>";
+const head = headStart + headEnd;
+const body = "<body><p>asdf</p></body></html>";
 
 test("should add a meta tag to the head", function (t) {
-  var expected =
-    '<html><head><title>test</title><meta name="ROBOTS" content="NOINDEX, NOFOLLOW"/>\n</head>';
-  var stream = metaRobots().createStream();
-  stream.setEncoding("utf8");
-  stream.pipe(
+  const expected =
+    headStart +
+    '<meta name="ROBOTS" content="NOINDEX, NOFOLLOW"/>\n' +
+    headEnd +
+    body;
+  const context = getContext();
+  const inStream = context.stream;
+  inStream.setEncoding("utf8");
+  htmlParser(context);
+  metaRobots(context);
+  const outStream = context.stream;
+  outStream.setEncoding("utf8");
+  outStream.pipe(
     concat(function (actual) {
       t.equal(actual, expected);
       t.end();
     })
   );
-  stream.end(head);
+  inStream.write(head);
+  inStream.end(body);
 });
 
 test("should do nothing to the body", function (t) {
-  var expected = body;
-  var stream = metaRobots().createStream();
-  stream.setEncoding("utf8");
-  stream.pipe(
+  const expected = body;
+  const context = getContext();
+  const inStream = context.stream;
+  inStream.setEncoding("utf8");
+  htmlParser(context);
+  metaRobots(context);
+  const outStream = context.stream;
+  outStream.setEncoding("utf8");
+  outStream.pipe(
     concat(function (actual) {
       t.equal(actual, expected);
       t.end();
     })
   );
-  stream.end(body);
+  inStream.end(body);
 });
 
 test("should not modify javascript", function (t) {
-  var config = Object.assign({}, defaultConfig);
-  var instance = metaRobots(config);
-  var data = getData();
+  const data = getContext();
   data.contentType = "text/javascript";
-  var streamStart = data.stream;
+  const streamStart = data.stream;
   streamStart.setEncoding("utf8");
-  instance(data); // this will replace data.stream when modifying the contents
-  var streamEnd = data.stream;
+  metaRobots(data); // this will replace data.stream when modifying the contents
+  const streamEnd = data.stream;
 
   // commented out so that we can test the results rather than the implimentation details
   //t.equal(streamStart, streamEnd);
 
-  var js = `document.write('${head}')`;
-  var expected = js;
+  const js = `document.write('${head}')`;
+  const expected = js;
 
   streamEnd.setEncoding("utf8");
   streamEnd.pipe(

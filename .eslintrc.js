@@ -1,36 +1,33 @@
 "use strict";
 
 module.exports = {
+  plugins: ["clean-regex"],
   extends: [
     "eslint:recommended",
     "plugin:prettier/recommended",
     "plugin:node/recommended",
+    "plugin:clean-regex/recommended",
   ],
   env: {
     node: true,
-    es6: true,
+  },
+  parserOptions: {
+    ecmaVersion: 2020,
   },
   rules: {
     // todo: enable these
-    //"no-var": "error",
-    //"prefer-const": "error",
+    "no-var": "error",
+    "one-var": ["error", "never"],
+    "prefer-const": "error",
+    "prefer-destructuring": "error",
     strict: "error",
-    // 'url.parse' was deprecated in v11, but this lib supports v6+ and the replacement, URL, was only standardized in v10
-    // next major release will include a bump of the minimum node.js version, allowing the use of URL and resolving
-    // alternatively, we could use https://www.npmjs.com/package/url to avoid the deprecated api but maintain backwards compatibility
-    "node/no-deprecated-api": "warn",
+    "no-unsafe-optional-chaining": "error",
   },
   overrides: [
     {
       files: ["examples/*/*.js"],
       rules: {
         "node/no-missing-require": "off",
-      },
-    },
-    {
-      files: ["test/**"],
-      rules: {
-        "node/no-unsupported-features/node-builtins": "off",
       },
     },
   ],
